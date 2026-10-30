@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>רשימת המשימות שלי</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 48px 16px;
+      box-sizing: border-box;
+      font-family: "Rubik", Arial, sans-serif;
+      color: #2d2a4a;
+      background: linear-gradient(135deg, #fde2e4, #e2ecf9, #e8f7ee, #fff4d6);
+      background-size: 400% 400%;
+      background-attachment: fixed;
+      animation: background-shift 15s ease infinite;
+    }
+
+    @keyframes background-shift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .card {
+      width: 100%;
+      max-width: 600px;
+      padding: 40px;
+      box-sizing: border-box;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(80, 70, 140, 0.15);
+      backdrop-filter: blur(8px);
+    }
+
+    .nav-link {
+      display: inline-block;
+      margin-bottom: 16px;
+      color: #7c3aed;
+      text-decoration: none;
+      font-size: 15px;
+    }
+
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+
+    h1 {
+      margin: 0 0 28px;
+      text-align: center;
+      font-size: 44px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #7c3aed, #ec4899, #f59e0b);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    #add-form, .edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .edit-form {
+      flex: 1;
+    }
+
+    .times {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .times label {
+      flex: 1;
+      min-width: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 14px;
+      color: #6b6790;
+    }
+
+    input[type="text"], input[type="datetime-local"] {
+      font-family: inherit;
+      font-size: 16px;
+      padding: 10px 14px;
+      border: 2px solid #e4def5;
+      border-radius: 12px;
+      background: white;
+      color: inherit;
+    }
+
+    input[type="text"]:focus, input[type="datetime-local"]:focus {
+      outline: none;
+      border-color: #a78bfa;
+    }
+
+    .primary-button {
+      padding: 12px 32px;
+      font-family: inherit;
+      font-size: 18px;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #7c3aed, #ec4899);
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .primary-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(124, 58, 237, 0.4);
+    }
+
+    .primary-button:active {
+      transform: translateY(1px);
+    }
+
+    .secondary-button {
+      padding: 12px 24px;
+      font-family: inherit;
+      font-size: 16px;
+      border: 2px solid #e4def5;
+      border-radius: 999px;
+      background: white;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .form-error {
+      margin: 0;
+      min-height: 1.2em;
+      font-size: 14px;
+      color: #ef4444;
+    }
+
+    .filters {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 20px 0 16px;
+    }
+
+    .filter {
+      padding: 6px 18px;
+      font-family: inherit;
+      font-size: 15px;
+      border: 2px solid #e4def5;
+      border-radius: 999px;
+      background: white;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .filter.active {
+      background: linear-gradient(90deg, #7c3aed, #ec4899);
+      border-color: transparent;
+      color: white;
+    }
+
+    #task-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .task {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 16px;
+      border-inline-start: 5px solid transparent;
+      box-shadow: 0 4px 12px rgba(80, 70, 140, 0.08);
+    }
+
+    .task.soon {
+      border-inline-start-color: #f59e0b;
+    }
+
+    .task.soon .task-times {
+      color: #d97706;
+    }
+
+    .task.overdue {
+      border-inline-start-color: #ef4444;
+    }
+
+    .task.overdue .task-times {
+      color: #ef4444;
+      font-weight: 800;
+    }
+
+    .task input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      accent-color: #7c3aed;
+      cursor: pointer;
+    }
+
+    .task-body {
+      flex: 1;
+      min-width: 0;
+      cursor: pointer;
+    }
+
+    .task-text {
+      font-size: 18px;
+      overflow-wrap: anywhere;
+    }
+
+    .task-times {
+      margin-top: 2px;
+      font-size: 13px;
+      color: #6b6790;
+    }
+
+    .task.done .task-text {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    .task.done .task-times {
+      opacity: 0.5;
+    }
+
+    .delete-button {
+      padding: 4px;
+      border: none;
+      background: none;
+      font-size: 18px;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: opacity 0.15s;
+    }
+
+    .delete-button:hover {
+      opacity: 1;
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .empty {
+      padding: 24px 0;
+      text-align: center;
+      color: #6b6790;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      font-size: 15px;
+    }
+
+    #clear-done {
+      padding: 0;
+      border: none;
+      background: none;
+      font-family: inherit;
+      font-size: 15px;
+      color: #7c3aed;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    #clear-done:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    .info-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      background: #f3efff;
+      border-radius: 16px;
+      font-size: 15px;
+      text-align: center;
+    }
+
+    .info-bar[hidden] {
+      display: none;
+    }
+
+    .info-bar .secondary-button {
+      padding: 8px 20px;
+      font-size: 15px;
+    }
+
+    #alarm {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(45, 42, 74, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 20;
+    }
+
+    #alarm[hidden] {
+      display: none;
+    }
+
+    .alarm-box {
+      width: 100%;
+      max-width: 460px;
+      padding: 32px 28px;
+      box-sizing: border-box;
+      text-align: center;
+      background: white;
+      border: 4px solid #ef4444;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      animation: pop-in 0.4s ease;
+    }
+
+    .alarm-icon {
+      font-size: 64px;
+      animation: ring 0.6s ease-in-out infinite;
+    }
+
+    @keyframes ring {
+      0%, 100% { transform: rotate(0); }
+      25%      { transform: rotate(-15deg); }
+      75%      { transform: rotate(15deg); }
+    }
+
+    .alarm-box h2 {
+      margin: 8px 0 16px;
+      font-size: 34px;
+      color: #ef4444;
+    }
+
+    #alarm-messages {
+      list-style: none;
+      margin: 0 0 24px;
+      padding: 0;
+      font-size: 20px;
+    }
+
+    #alarm-messages li + li {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #e4def5;
+    }
+
+    @keyframes pop-in {
+      0%   { opacity: 0; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    #confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 28px 20px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a class="nav-link" href="index.html">🏠 לדף הראשי</a>
+    <h1>רשימת המשימות שלי</h1>
+
+    <div id="sound-bar" class="info-bar">
+      <span>כדי לשמוע את התזכורות, צריך להפעיל צליל בכל פעם שפותחים את הדף</span>
+      <button id="enable-sound" class="secondary-button">🔊 הפעל צליל</button>
+    </div>
+
+    <div id="notify-bar" class="info-bar" hidden>
+      <span id="notify-text"></span>
+      <button id="enable-notify" class="secondary-button">🔔 הפעל התראות</button>
+    </div>
+
+    <form id="add-form">
+      <input type="text" id="task-text" placeholder="מה צריך לעשות?" autocomplete="off">
+      <div class="times">
+        <label>התחלה
+          <input type="datetime-local" id="task-start">
+        </label>
+        <label>סיום
+          <input type="datetime-local" id="task-end">
+        </label>
+      </div>
+      <p class="form-error" id="form-error"></p>
+      <button type="submit" class="primary-button">הוסף משימה</button>
+    </form>
+
+    <div class="filters">
+      <button class="filter" data-filter="all">הכול</button>
+      <button class="filter" data-filter="active">פעילות</button>
+      <button class="filter" data-filter="done">שהושלמו</button>
+    </div>
+
+    <ul id="task-list"></ul>
+
+    <footer>
+      <span id="counter"></span>
+      <button id="clear-done">נקה משימות שהושלמו</button>
+    </footer>
+  </div>
+  <div id="alarm" hidden>
+    <div class="alarm-box" role="alertdialog" aria-labelledby="alarm-title">
+      <div class="alarm-icon">⏰</div>
+      <h2 id="alarm-title">תזכורת!</h2>
+      <ul id="alarm-messages"></ul>
+      <button id="alarm-close" class="primary-button">✔ הבנתי</button>
+    </div>
+  </div>
+  <canvas id="confetti"></canvas>
+
+  <script>
+    const STORAGE_KEY = "todo-tasks";
+    const form = document.getElementById("add-form");
+    const textInput = document.getElementById("task-text");
+    const startInput = document.getElementById("task-start");
+    const endInput = document.getElementById("task-end");
+    const formError = document.getElementById("form-error");
+    const list = document.getElementById("task-list");
+    const counter = document.getElementById("counter");
+    const clearDoneButton = document.getElementById("clear-done");
+    const filterButtons = document.querySelectorAll(".filter");
+    const emptyMessages = {
+      all: "אין משימות עדיין. הוסף את הראשונה! ✨",
+      active: "אין משימות פעילות. כל הכבוד! 🎉",
+      done: "עוד לא השלמת משימות"
+    };
+
+    let tasks = loadTasks();
+    let filter = "all";
+    let editingId = null;
+
+    function loadTasks() {
+      let saved;
+      try {
+        saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch {
+        saved = [];
+      }
+      // tasks saved before reminders existed start counting from now
+      saved.forEach(t => {
+        if (!t.lastNotified) t.lastNotified = Date.now();
+      });
+      return saved;
+    }
+
+    function saveTasks() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      } catch {
+        // storage is blocked; the list still works until the page closes
+      }
+    }
+
+    // the "2026-10-30T14:00" format that datetime-local inputs use
+    function toInputValue(date) {
+      const pad = n => String(n).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    // start now (so there's no start reminder unless the user picks a later time), end one hour later
+    function setDefaultTimes() {
+      const start = new Date();
+      start.setSeconds(0, 0);
+      const end = new Date(start.getTime() + 60 * 60 * 1000);
+      startInput.value = toInputValue(start);
+      endInput.value = toInputValue(end);
+    }
+
+    function formatTime(value) {
+      return new Date(value).toLocaleString("he-IL", {
+        weekday: "short",
+        day: "numeric",
+        month: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function validate(text, start, end) {
+      if (!text) return "צריך לכתוב מה המשימה";
+      if (!start || !end) return "צריך לבחור זמן התחלה וזמן סיום";
+      if (new Date(end) <= new Date(start)) return "זמן הסיום צריך להיות אחרי זמן ההתחלה";
+      return "";
+    }
+
+    function createTimeLabel(labelText, value) {
+      const label = document.createElement("label");
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.type = "datetime-local";
+      input.value = value;
+      label.appendChild(input);
+      return { label, input };
+    }
+
+    function createTaskItem(task) {
+      const li = document.createElement("li");
+      li.className = ["task", task.done && "done", urgencyClass(task)].filter(Boolean).join(" ");
+      li.dataset.id = task.id;
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = task.done;
+      checkbox.title = "סמן כבוצעה";
+      checkbox.addEventListener("change", () => {
+        task.done = checkbox.checked;
+        // un-checking shouldn't replay reminders that passed while it was done
+        if (!task.done) task.lastNotified = Date.now();
+        saveTasks();
+        if (task.done) launchConfetti(checkbox);
+        render();
+      });
+
+      const body = document.createElement("div");
+      body.className = "task-body";
+      body.title = "לחיצה כפולה לעריכה";
+      const text = document.createElement("div");
+      text.className = "task-text";
+      text.textContent = task.text;
+      const times = document.createElement("div");
+      times.className = "task-times";
+      times.textContent = `🕐 ${formatTime(task.start)} עד ${formatTime(task.end)}`;
+      body.append(text, times);
+      body.addEventListener("dblclick", () => {
+        editingId = task.id;
+        render();
+      });
+
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "delete-button";
+      deleteButton.textContent = "🗑️";
+      deleteButton.title = "מחק משימה";
+      deleteButton.addEventListener("click", () => {
+        tasks = tasks.filter(t => t.id !== task.id);
+        saveTasks();
+        render();
+      });
+
+      li.append(checkbox, body, deleteButton);
+      return li;
+    }
+
+    function createEditItem(task) {
+      const li = document.createElement("li");
+      li.className = "task";
+
+      const editForm = document.createElement("form");
+      editForm.className = "edit-form";
+      const textField = document.createElement("input");
+      textField.type = "text";
+      textField.value = task.text;
+      const timesRow = document.createElement("div");
+      timesRow.className = "times";
+      const start = createTimeLabel("התחלה", task.start);
+      const end = createTimeLabel("סיום", task.end);
+      timesRow.append(start.label, end.label);
+      const error = document.createElement("p");
+      error.className = "form-error";
+
+      const actions = document.createElement("div");
+      actions.className = "edit-actions";
+      const saveButton = document.createElement("button");
+      saveButton.type = "submit";
+      saveButton.className = "primary-button";
+      saveButton.textContent = "שמור";
+      const cancelButton = document.createElement("button");
+      cancelButton.type = "button";
+      cancelButton.className = "secondary-button";
+      cancelButton.textContent = "ביטול";
+      actions.append(saveButton, cancelButton);
+
+      editForm.append(textField, timesRow, error, actions);
+      li.appendChild(editForm);
+
+      editForm.addEventListener("submit", event => {
+        event.preventDefault();
+        const newText = textField.value.trim();
+        const message = validate(newText, start.input.value, end.input.value);
+        error.textContent = message;
+        if (message) return;
+        task.text = newText;
+        task.start = start.input.value;
+        task.end = end.input.value;
+        task.lastNotified = Date.now();
+        editingId = null;
+        saveTasks();
+        render();
+      });
+
+      function cancelEdit() {
+        editingId = null;
+        render();
+      }
+      cancelButton.addEventListener("click", cancelEdit);
+      editForm.addEventListener("keydown", event => {
+        if (event.key === "Escape") cancelEdit();
+      });
+
+      requestAnimationFrame(() => textField.focus());
+      return li;
+    }
+
+    function render() {
+      list.innerHTML = "";
+
+      // completed tasks go to the bottom, otherwise keep the order they were added
+      const visible = tasks
+        .filter(t => filter === "all" || (filter === "active" ? !t.done : t.done))
+        .sort((a, b) => a.done - b.done);
+      visible.forEach(task => {
+        list.appendChild(task.id === editingId ? createEditItem(task) : createTaskItem(task));
+      });
+
+      if (visible.length === 0) {
+        const empty = document.createElement("li");
+        empty.className = "empty";
+        empty.textContent = emptyMessages[filter];
+        list.appendChild(empty);
+      }
+
+      const remaining = tasks.filter(t => !t.done).length;
+      counter.textContent = tasks.length === 0 ? "" : `נשארו ${remaining} מתוך ${tasks.length} משימות`;
+      clearDoneButton.disabled = remaining === tasks.length;
+      filterButtons.forEach(b => b.classList.toggle("active", b.dataset.filter === filter));
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const text = textInput.value.trim();
+      const message = validate(text, startInput.value, endInput.value);
+      formError.textContent = message;
+      if (message) return;
+
+      tasks.push({
+        id: Date.now(),
+        text,
+        start: startInput.value,
+        end: endInput.value,
+        done: false,
+        lastNotified: Date.now()
+      });
+      saveTasks();
+      textInput.value = "";
+      setDefaultTimes();
+      textInput.focus();
+      filter = "all"; // so the new task is visible
+      render();
+    });
+
+    filterButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        filter = button.dataset.filter;
+        editingId = null;
+        render();
+      });
+    });
+
+    clearDoneButton.addEventListener("click", () => {
+      tasks = tasks.filter(t => !t.done);
+      saveTasks();
+      render();
+    });
+
+    // ----- reminders -----
+    const WORK_START = 8;  // 08:00
+    const WORK_END = 16;   // 16:00
+    const DAY = 24 * 60 * 60 * 1000;
+    // on the last day, reminders get closer together as the deadline nears
+    const lastDayOffsets = [
+      { minutes: 300, label: "נשארו 5 שעות" },
+      { minutes: 180, label: "נשארו 3 שעות" },
+      { minutes: 120, label: "נשארו שעתיים" },
+      { minutes: 60, label: "נשארה שעה אחת" },
+      { minutes: 30, label: "נשארו 30 דקות" },
+      { minutes: 15, label: "נשארו 15 דקות" }
+    ];
+    const notifyBar = document.getElementById("notify-bar");
+    const notifyText = document.getElementById("notify-text");
+    const enableNotifyButton = document.getElementById("enable-notify");
+    const soundBar = document.getElementById("sound-bar");
+    const alarm = document.getElementById("alarm");
+    const alarmMessages = document.getElementById("alarm-messages");
+    const alarmCloseButton = document.getElementById("alarm-close");
+    const pageTitle = document.title;
+    let audioCtx = null;
+    let alarmSoundTimer = null;
+    let titleFlashTimer = null;
+
+    function startOfDay(time) {
+      const d = new Date(time);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime();
+    }
+
+    function atTime(day, hours, minutes = 0) {
+      const d = new Date(day);
+      d.setHours(hours, minutes, 0, 0);
+      return d.getTime();
+    }
+
+    // every reminder of a task as { time, message }, from the day it was added (its id) to its deadline
+    function getReminders(task) {
+      const deadline = new Date(task.end).getTime();
+      const lastDay = startOfDay(deadline);
+      const name = `"${task.text}"`;
+      const reminders = [
+        { time: new Date(task.start).getTime(), message: `🚀 הגיע הזמן להתחיל: ${name}` }
+      ];
+
+      // adding 1.5 days and rounding down always lands on the next day, even when the clocks change
+      for (let day = startOfDay(task.id); day <= lastDay; day = startOfDay(day + DAY * 1.5)) {
+        const daysLeft = Math.round((lastDay - day) / DAY);
+
+        if (daysLeft >= 2) {
+          reminders.push({ time: atTime(day, WORK_START), message: `☀️ בוקר טוב! מחכה לך המשימה ${name}. נשארו ${daysLeft} ימים` });
+          reminders.push({ time: atTime(day, WORK_END - 1, 30), message: `⏳ איך מתקדמים עם ${name}? נשארו ${daysLeft} ימים` });
+        } else if (daysLeft === 1) {
+          [[WORK_START, 0], [12, 0], [WORK_END - 1, 30]].forEach(([hours, minutes]) => {
+            reminders.push({ time: atTime(day, hours, minutes), message: `📌 נשאר יום אחד למשימה ${name}. זה הזמן לעבוד עליה` });
+          });
+          reminders.push({ time: atTime(day, 20), message: `🌙 מחר היום האחרון למשימה ${name}!` });
+        } else {
+          const morning = atTime(day, WORK_START);
+          if (morning < deadline) {
+            reminders.push({ time: morning, message: `🔥 היום היום האחרון למשימה ${name}!` });
+          }
+          lastDayOffsets.forEach(offset => {
+            const time = deadline - offset.minutes * 60 * 1000;
+            if (time > morning) reminders.push({ time, message: `⏰ ${offset.label} למשימה ${name}` });
+          });
+          reminders.push({ time: deadline, message: `🏁 הזמן של ${name} נגמר. סיימת?` });
+        }
+      }
+
+      return reminders.sort((a, b) => a.time - b.time);
+    }
+
+    function checkReminders(onPageOpen = false) {
+      const now = Date.now();
+      let changed = false;
+
+      tasks.forEach(task => {
+        if (task.done) return;
+        const due = getReminders(task).filter(r => r.time > task.lastNotified && r.time <= now);
+        if (due.length === 0) return;
+
+        // if several were missed, show only the latest one. When the page opens after being
+        // closed, show it only if it's the deadline; other missed reminders are skipped
+        const latest = due[due.length - 1];
+        if (!onPageOpen || latest.time === new Date(task.end).getTime()) {
+          showReminder(task, latest.message);
+        }
+        task.lastNotified = now;
+        changed = true;
+      });
+
+      if (changed) saveTasks();
+      updateUrgency();
+    }
+
+    function showReminder(task, message) {
+      showAlarm(message);
+      if ("Notification" in window && Notification.permission === "granted") {
+        try {
+          // no shared tag, so a new reminder never silently replaces one that is still open
+          const notification = new Notification("⏰ תזכורת", {
+            body: message,
+            requireInteraction: true,
+            lang: "he",
+            dir: "rtl"
+          });
+          notification.onclick = () => {
+            window.focus();
+            notification.close();
+          };
+        } catch {
+          // some browsers (like Chrome on Android) don't allow this; the in-page alarm still shows
+        }
+      }
+    }
+
+    // a big window over the page, with a repeating sound and a flashing tab title,
+    // until the user closes it themselves
+    function showAlarm(message) {
+      const item = document.createElement("li");
+      item.textContent = message;
+      alarmMessages.appendChild(item);
+
+      if (!alarm.hidden) return; // already ringing; the new message was added to the list
+      alarm.hidden = false;
+      alarmCloseButton.focus();
+
+      playAlarmSound();
+      alarmSoundTimer = setInterval(playAlarmSound, 2500);
+
+      let flash = false;
+      titleFlashTimer = setInterval(() => {
+        flash = !flash;
+        document.title = flash ? "⏰ תזכורת!" : pageTitle;
+      }, 1000);
+    }
+
+    function closeAlarm() {
+      alarm.hidden = true;
+      alarmMessages.innerHTML = "";
+      clearInterval(alarmSoundTimer);
+      clearInterval(titleFlashTimer);
+      document.title = pageTitle;
+    }
+
+    alarmCloseButton.addEventListener("click", closeAlarm);
+
+    // browsers only allow sound after the page has been clicked at least once
+    document.addEventListener("click", () => {
+      if (!audioCtx) audioCtx = new AudioContext();
+      audioCtx.resume().then(() => {
+        soundBar.hidden = true;
+      });
+    });
+
+    // three rising notes, loud enough to notice from across the room
+    function playAlarmSound() {
+      if (!audioCtx) return;
+      [660, 880, 1100].forEach((frequency, i) => {
+        const oscillator = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const start = audioCtx.currentTime + i * 0.25;
+        oscillator.type = "triangle";
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.7, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
+        oscillator.connect(gain).connect(audioCtx.destination);
+        oscillator.start(start);
+        oscillator.stop(start + 0.45);
+      });
+    }
+
+    // orange when less than a day is left, red once the time has passed
+    function urgencyClass(task) {
+      if (task.done) return "";
+      const left = new Date(task.end).getTime() - Date.now();
+      if (left <= 0) return "overdue";
+      if (left <= DAY) return "soon";
+      return "";
+    }
+
+    // updates colors in place, so an open edit form isn't rebuilt
+    function updateUrgency() {
+      document.querySelectorAll(".task[data-id]").forEach(li => {
+        const task = tasks.find(t => String(t.id) === li.dataset.id);
+        li.classList.remove("soon", "overdue");
+        const urgency = urgencyClass(task);
+        if (urgency) li.classList.add(urgency);
+      });
+    }
+
+    function updateNotifyBar() {
+      enableNotifyButton.hidden = true;
+      notifyBar.hidden = false;
+      if (!("Notification" in window)) {
+        notifyText.textContent = "הדפדפן הזה לא תומך בהתראות. התזכורות יופיעו בתוך הדף.";
+      } else if (Notification.permission === "denied") {
+        notifyText.textContent = "ההתראות חסומות בדפדפן. התזכורות יופיעו רק בתוך הדף.";
+      } else if (Notification.permission === "default") {
+        notifyText.textContent = "כדי לקבל תזכורות גם כשאתה בחלון אחר, צריך לאשר התראות";
+        enableNotifyButton.hidden = false;
+      } else {
+        notifyBar.hidden = true;
+      }
+    }
+
+    enableNotifyButton.addEventListener("click", () => {
+      Notification.requestPermission().then(updateNotifyBar);
+    });
+
+    // ----- confetti (same idea as on the first page) -----
+    const canvas = document.getElementById("confetti");
+    const ctx = canvas.getContext("2d");
+    const colors = ["#7c3aed", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444"];
+    let pieces = [];
+    let animating = false;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    function launchConfetti(element) {
+      const rect = element.getBoundingClientRect();
+      const startX = rect.left + rect.width / 2;
+      const startY = rect.top;
+
+      for (let i = 0; i < 100; i++) {
+        const angle = Math.random() * Math.PI - Math.PI;
+        const speed = 4 + Math.random() * 9;
+        pieces.push({
+          x: startX,
+          y: startY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: 6 + Math.random() * 6,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          spin: (Math.random() - 0.5) * 12
+        });
+      }
+
+      if (!animating) {
+        animating = true;
+        requestAnimationFrame(drawConfetti);
+      }
+    }
+
+    function drawConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      pieces.forEach(p => {
+        p.vy += 0.3;          // gravity
+        p.vx *= 0.99;         // air resistance
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.spin;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        ctx.restore();
+      });
+
+      pieces = pieces.filter(p => p.y < canvas.height + 20);
+
+      if (pieces.length > 0) {
+        requestAnimationFrame(drawConfetti);
+      } else {
+        animating = false;
+      }
+    }
+
+    setDefaultTimes();
+    render();
+    updateNotifyBar();
+    checkReminders(true);
+    setInterval(() => checkReminders(), 30 * 1000);
+  </script>
+</body>
+</html>
