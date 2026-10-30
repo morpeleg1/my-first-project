@@ -878,10 +878,16 @@
       });
     }
 
+    // phones freeze a page in the background and don't allow this kind of notification,
+    // so on a phone the reminders will come from Google Calendar instead
+    const isPhone = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
     function updateNotifyBar() {
       enableNotifyButton.hidden = true;
       notifyBar.hidden = false;
-      if (!("Notification" in window)) {
+      if (isPhone) {
+        notifyText.textContent = "📱 בטלפון, התזכורות יגיעו מיומן גוגל (בקרוב). כאן הן מופיעות רק כשהדף פתוח על המסך.";
+      } else if (!("Notification" in window)) {
         notifyText.textContent = "הדפדפן הזה לא תומך בהתראות. התזכורות יופיעו בתוך הדף.";
       } else if (Notification.permission === "denied") {
         notifyText.textContent = "ההתראות חסומות בדפדפן. התזכורות יופיעו רק בתוך הדף.";
@@ -894,7 +900,14 @@
     }
 
     enableNotifyButton.addEventListener("click", () => {
-      Notification.requestPermission().then(updateNotifyBar);
+      Notification.requestPermission().then(result => {
+        if (result === "default") {
+          // the browser closed or quietly blocked the request without an answer
+          notifyText.textContent = "הדפדפן לא הציג את הבקשה. לחץ על הסמל שמשמאל לכתובת, בחר \"התראות\" ← \"אפשר\", ואז רענן את הדף (F5).";
+        } else {
+          updateNotifyBar();
+        }
+      });
     });
 
     // ----- confetti (same idea as on the first page) -----
